@@ -12,10 +12,14 @@ use std::mem::swap;
 use tqdm::tqdm;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
+#[command(
+    author = "Michel Romero",
+    version,
+    about = "Generate string art from a picture",
+    long_about = None
+)]
+struct Cli {
     /// Path to the input image
-    #[arg(short, long)]
     input: Option<String>,
 
     /// Path to save the output image
@@ -34,25 +38,25 @@ struct Args {
     #[arg(short, long, default_value = "4000")]
     lines: usize,
 
-    /// scale
+    /// Scale of the image
     #[arg(short, long, default_value = "10.0")]
     scale: f64,
 
-    /// scale
+    /// Weight of each line
     #[arg(short, long, default_value = "20")]
     weight: u8,
 }
 
 fn main() {
-    let args = Args::parse();
+    let cli = Cli::parse();
 
-    let input_path = args.input;
-    let output_path = args.output;
-    let coordinates_path = args.coordinates;
-    let num_points = args.points;
-    let num_lines = args.lines;
-    let scale = args.scale;
-    let weight = args.weight;
+    let input_path = cli.input;
+    let output_path = cli.output;
+    let coordinates_path = cli.coordinates;
+    let num_points = cli.points;
+    let num_lines = cli.lines;
+    let scale = cli.scale;
+    let weight = cli.weight;
 
     let mut coordinates: Vec<((i32, i32), (i32, i32))> = vec![];
     let mut canvas_size = 0.0;
