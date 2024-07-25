@@ -121,7 +121,7 @@ fn main() {
                     .expect("Error writing to file");
             }
 
-            substract_line(&mut img, p1, p2, weight);
+            subtract_line(&mut img, p1, p2, weight);
 
             lines_drawn.insert(best_pair);
             coordinates.push((p1, p2));
@@ -219,7 +219,7 @@ fn draw_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32)) {
     );
 }
 
-fn substract_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32), weight: u8) {
+fn subtract_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32), weight: u8) {
     let canvas_size = image.width();
     let mut mask = GrayImage::new(canvas_size, canvas_size);
     draw_line_segment_mut(
