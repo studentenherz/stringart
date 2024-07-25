@@ -11,7 +11,6 @@ use std::io::{self, BufRead, Write};
 use std::mem::swap;
 use tqdm::tqdm;
 
-/// Struct to handle command-line arguments using clap derive macros
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -58,9 +57,7 @@ fn main() {
     let mut coordinates: Vec<((i32, i32), (i32, i32))> = vec![];
     let mut canvas_size = 0.0;
 
-    // Process image
     if let Some(input_path) = input_path {
-        // Open the file in append mode
         let mut file = coordinates_path.map(|coordinates_path| {
             OpenOptions::new()
                 .write(true)
@@ -70,13 +67,11 @@ fn main() {
                 .expect("Failed to open coordinates file")
         });
 
-        // Load the image
         let mut img = image::open(input_path)
             .expect("Failed to open image")
             .to_luma8();
         invert(&mut img);
 
-        // Define points around the perimeter
         let angles: Vec<f64> = (0..num_points)
             .map(|i| 2.0 * PI * i as f64 / num_points as f64)
             .collect();
@@ -85,7 +80,6 @@ fn main() {
             .map(|&angle| Vector2::new(angle.cos(), angle.sin()))
             .collect();
 
-        // scale points to canvas size
         canvas_size = img.width() as f64;
         let points: Vec<(i32, i32)> = points
             .iter()
@@ -97,15 +91,12 @@ fn main() {
             })
             .collect();
 
-        // Keep track of drawn lines
         let mut lines_drawn = HashSet::new();
 
-        // Draw lines based on image brightness
         for _ in tqdm(0..num_lines) {
             let mut max_value = 0.0;
             let mut best_pair = (0, 0);
 
-            // Find the darkest line to draw
             for i in 0..num_points {
                 for j in (i + 1)..num_points {
                     if lines_drawn.contains(&(i, j)) {
@@ -122,7 +113,6 @@ fn main() {
                 }
             }
 
-            // Draw the best line on the canvas
             let p1 = points[best_pair.0];
             let p2 = points[best_pair.1];
 
@@ -131,7 +121,6 @@ fn main() {
                     .expect("Error writing to file");
             }
 
-            // Subtract the drawn line from the image
             substract_line(&mut img, p1, p2, weight);
 
             lines_drawn.insert(best_pair);
@@ -146,13 +135,11 @@ fn main() {
             let parts: Vec<&str> = line.split_whitespace().collect();
 
             if parts.len() == 4 {
-                // Parse the four parts into numbers
                 let a: i32 = parts[0].parse().expect("Failed to parse number");
                 let b: i32 = parts[1].parse().expect("Failed to parse number");
                 let c: i32 = parts[2].parse().expect("Failed to parse number");
                 let d: i32 = parts[3].parse().expect("Failed to parse number");
 
-                // Process or store the numbers
                 coordinates.push(((a, b), (c, d)));
                 canvas_size = f64::max(canvas_size, a as f64);
                 canvas_size = f64::max(canvas_size, b as f64);
@@ -164,7 +151,6 @@ fn main() {
         }
     }
 
-    // Create a blank canvas
     let mut canvas = GrayImage::new((scale * canvas_size) as u32, (scale * canvas_size) as u32);
     for pixel in canvas.pixels_mut() {
         *pixel = Luma([255]);
@@ -176,7 +162,6 @@ fn main() {
         draw_line(&mut canvas, p1, p2);
     }
 
-    // Save the resulting string art image
     canvas.save(output_path).expect("Failed to save image");
 }
 
