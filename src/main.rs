@@ -75,8 +75,6 @@ fn main() {
             .expect("Failed to open image")
             .to_luma8();
         invert(&mut img);
-        img.save("source_luma_inv.png")
-            .expect("Couldn't save image");
 
         // Define points around the perimeter
         let angles: Vec<f64> = (0..num_points)
