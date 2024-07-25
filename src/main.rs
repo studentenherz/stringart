@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{builder::styling::AnsiColor, builder::Styles, Parser};
 use image::imageops::invert;
 use image::{GrayImage, Luma};
 use imageproc::drawing::draw_line_segment_mut;
@@ -11,6 +11,14 @@ use std::io::{self, BufRead, Write};
 use std::mem::swap;
 use tqdm::tqdm;
 
+fn cli_styles() -> Styles {
+    Styles::styled()
+        .header(AnsiColor::Yellow.on_default().bold())
+        .usage(AnsiColor::Green.on_default().bold())
+        .literal(AnsiColor::Green.on_default().bold())
+        .placeholder(AnsiColor::Green.on_default())
+}
+
 #[derive(Parser, Debug)]
 #[command(
     author = "Michel Romero",
@@ -18,6 +26,7 @@ use tqdm::tqdm;
     about = "Generate string art from a picture",
     long_about = None
 )]
+#[command(styles=cli_styles())]
 struct Cli {
     /// Path to the input image
     input: Option<String>,
