@@ -106,25 +106,27 @@ fn main() {
 
         let mut lines_drawn = HashSet::new();
 
+        let mut last_point_index = 0; // Starting point
+
         for _ in tqdm(0..num_lines) {
             let mut max_value = 0.0;
             let mut best_pair = (0, 0);
 
             for i in 0..num_points {
-                for j in (i + 1)..num_points {
-                    if lines_drawn.contains(&(i, j)) {
-                        continue;
-                    }
+                if lines_drawn.contains(&(i, last_point_index)) {
+                    continue;
+                }
 
-                    let p1 = points[i];
-                    let p2 = points[j];
-                    let line_intensity = calculate_line_intensity(&img, p1, p2);
-                    if line_intensity > max_value {
-                        max_value = line_intensity;
-                        best_pair = (i, j);
-                    }
+                let p1 = points[i];
+                let p2 = points[last_point_index];
+                let line_intensity = calculate_line_intensity(&img, p1, p2);
+                if line_intensity > max_value {
+                    max_value = line_intensity;
+                    best_pair = (i, last_point_index);
                 }
             }
+
+            last_point_index = best_pair.0;
 
             let p1 = points[best_pair.0];
             let p2 = points[best_pair.1];
