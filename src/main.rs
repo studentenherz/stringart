@@ -109,7 +109,7 @@ fn main() {
         let mut last_point_index = 0; // Starting point
 
         for _ in tqdm(0..num_lines) {
-            let mut max_value = 0.0;
+            let mut max_value = 0;
             let mut best_pair = (0, 0);
 
             for i in 0..num_points {
@@ -180,9 +180,8 @@ fn main() {
     canvas.save(output_path).expect("Failed to save image");
 }
 
-fn calculate_line_intensity(image: &GrayImage, p1: (i32, i32), p2: (i32, i32)) -> f64 {
-    let mut total_intensity = 0.0;
-    let mut count = 0;
+fn calculate_line_intensity(image: &GrayImage, p1: (i32, i32), p2: (i32, i32)) -> u32 {
+    let mut total_intensity = 0u32;
     let (mut x1, mut y1) = (p1.0 as f64, p1.1 as f64);
     let (mut x2, mut y2) = (p2.0 as f64, p2.1 as f64);
     let mut dx = x2 - x1;
@@ -201,8 +200,7 @@ fn calculate_line_intensity(image: &GrayImage, p1: (i32, i32), p2: (i32, i32)) -
             let x = max(0, min(x as u32, image.width() - 1));
             let y = max(0, min(y.round() as u32, image.height() - 1));
             let pixel_value = image.get_pixel(x, y).0[0];
-            total_intensity += pixel_value as f64;
-            count += 1;
+            total_intensity += pixel_value as u32;
         }
     } else {
         let (mut y1, mut y2) = (p1.1, p2.1);
@@ -217,12 +215,11 @@ fn calculate_line_intensity(image: &GrayImage, p1: (i32, i32), p2: (i32, i32)) -
             let x = max(0, min(x.round() as u32, image.width() - 1));
             let y = max(0, min(y as u32, image.height() - 1));
             let pixel_value = image.get_pixel(x, y).0[0];
-            total_intensity += pixel_value as f64;
-            count += 1;
+            total_intensity += pixel_value as u32;
         }
     }
 
-    total_intensity / count as f64
+    total_intensity
 }
 
 fn draw_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32)) {
