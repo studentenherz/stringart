@@ -7,5 +7,5 @@ From [Wikipedia](https://en.wikipedia.org/wiki/String_art)
 This repo is an implementation to generate string art from an image
 
 <div align="center">
-    <img src="./img/stringart.png" />
+    <img width="400px" src="./img/stringart.png" />
 </div>
