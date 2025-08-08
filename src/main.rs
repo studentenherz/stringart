@@ -3,14 +3,16 @@ use image::imageops::invert;
 use image::{GrayImage, Luma};
 use imageproc::drawing::draw_line_segment_mut;
 use nalgebra::Vector2;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::cmp::{max, min};
+use rayon::prelude::*;
 use std::collections::HashSet;
 use std::f64::consts::PI;
 use std::fs::{self, OpenOptions};
 use std::io::{self, BufRead, Write};
-use std::mem::swap;
 use tqdm::tqdm;
+
+mod utils;
+
+use utils::*;
 
 fn cli_styles() -> Styles {
     Styles::styled()
@@ -69,7 +71,7 @@ fn main() {
     let weight = cli.weight;
 
     let mut coordinates: Vec<((i32, i32), (i32, i32))> = vec![];
-    let mut canvas_size = 0.0;
+    let mut canvas_size = 0;
 
     if let Some(input_path) = input_path {
         let mut file = coordinates_path.map(|coordinates_path| {
@@ -94,13 +96,13 @@ fn main() {
             .map(|&angle| Vector2::new(angle.cos(), angle.sin()))
             .collect();
 
-        canvas_size = img.width() as f64;
+        canvas_size = img.width().min(img.height()) as i32;
         let points: Vec<(i32, i32)> = points
             .iter()
             .map(|point| {
                 (
-                    ((point.x + 1.0) * (canvas_size / 2.0)) as i32,
-                    ((point.y + 1.0) * (canvas_size / 2.0)) as i32,
+                    ((point.x * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
+                    ((point.y * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
                 )
             })
             .collect();
@@ -158,17 +160,20 @@ fn main() {
                 let d: i32 = parts[3].parse().expect("Failed to parse number");
 
                 coordinates.push(((a, b), (c, d)));
-                canvas_size = f64::max(canvas_size, a as f64);
-                canvas_size = f64::max(canvas_size, b as f64);
-                canvas_size = f64::max(canvas_size, c as f64);
-                canvas_size = f64::max(canvas_size, d as f64);
+                canvas_size = i32::max(canvas_size, a);
+                canvas_size = i32::max(canvas_size, b);
+                canvas_size = i32::max(canvas_size, c);
+                canvas_size = i32::max(canvas_size, d);
             } else {
                 eprintln!("Unexpected number of elements in line: {}", line);
             }
         }
     }
 
-    let mut canvas = GrayImage::new((scale * canvas_size) as u32, (scale * canvas_size) as u32);
+    let mut canvas = GrayImage::new(
+        (scale * canvas_size as f64) as u32,
+        (scale * canvas_size as f64) as u32,
+    );
     for pixel in canvas.pixels_mut() {
         *pixel = Luma([255]);
     }
@@ -184,41 +189,10 @@ fn main() {
 
 fn calculate_line_intensity(image: &GrayImage, p1: (i32, i32), p2: (i32, i32)) -> u32 {
     let mut total_intensity = 0u32;
-    let (mut x1, mut y1) = (p1.0 as f64, p1.1 as f64);
-    let (mut x2, mut y2) = (p2.0 as f64, p2.1 as f64);
-    let mut dx = x2 - x1;
-    let mut dy = y2 - y1;
 
-    if dx.abs() > dy.abs() {
-        let (mut x1, mut x2) = (p1.0, p2.0);
-        if x1 > x2 {
-            swap(&mut x1, &mut x2);
-            swap(&mut y1, &mut y2);
-            dx *= -1.0;
-            dy *= -1.0;
-        }
-        for x in x1..=x2 {
-            let y = y1 + dy * (x - x1) as f64 / dx;
-            let x = max(0, min(x as u32, image.width() - 1));
-            let y = max(0, min(y.round() as u32, image.height() - 1));
-            let pixel_value = image.get_pixel(x, y).0[0];
-            total_intensity += pixel_value as u32;
-        }
-    } else {
-        let (mut y1, mut y2) = (p1.1, p2.1);
-        if y1 > y2 {
-            swap(&mut x1, &mut x2);
-            swap(&mut y1, &mut y2);
-            dx *= -1.0;
-            dy *= -1.0;
-        }
-        for y in y1..=y2 {
-            let x = x1 + dx * (y - y1) as f64 / dy;
-            let x = max(0, min(x.round() as u32, image.width() - 1));
-            let y = max(0, min(y as u32, image.height() - 1));
-            let pixel_value = image.get_pixel(x, y).0[0];
-            total_intensity += pixel_value as u32;
-        }
+    for (x, y) in PixelLine::new(p1.0, p1.1, p2.0, p1.1) {
+        let pixel_value = image.get_pixel(x as u32, y as u32).0[0];
+        total_intensity += pixel_value as u32;
     }
 
     total_intensity
