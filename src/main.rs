@@ -3,6 +3,7 @@ use image::imageops::invert;
 use image::{GrayImage, Luma};
 use imageproc::drawing::draw_line_segment_mut;
 use nalgebra::Vector2;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::f64::consts::PI;
@@ -109,27 +110,28 @@ fn main() {
         let mut last_point_index = 0; // Starting point
 
         for _ in tqdm(0..num_lines) {
-            let mut max_value = 0;
-            let mut best_pair = (0, 0);
+            let best_next_index = (0..num_points)
+                .into_par_iter()
+                .filter_map(|i| {
+                    if lines_drawn.contains(&(i, last_point_index)) {
+                        return None;
+                    }
 
-            for i in 0..num_points {
-                if lines_drawn.contains(&(i, last_point_index)) {
-                    continue;
-                }
+                    let p1 = points[i];
+                    let p2 = points[last_point_index];
 
-                let p1 = points[i];
-                let p2 = points[last_point_index];
-                let line_intensity = calculate_line_intensity(&img, p1, p2);
-                if line_intensity > max_value {
-                    max_value = line_intensity;
-                    best_pair = (i, last_point_index);
-                }
-            }
+                    Some((calculate_line_intensity(&img, p1, p2), i))
+                })
+                .max_by_key(|(intensity, _i)| *intensity)
+                .expect(&format!(
+                    "Can't find a line form point {} that isn't already taken",
+                    last_point_index
+                ))
+                .1;
 
-            last_point_index = best_pair.0;
-
-            let p1 = points[best_pair.0];
-            let p2 = points[best_pair.1];
+            let p1 = points[last_point_index];
+            let p2 = points[best_next_index];
+            last_point_index = best_next_index;
 
             if let Some(ref mut file) = file {
                 writeln!(file, "{} {} {} {}", p1.0, p1.1, p2.0, p2.1)
@@ -138,7 +140,7 @@ fn main() {
 
             subtract_line(&mut img, p1, p2, weight);
 
-            lines_drawn.insert(best_pair);
+            lines_drawn.insert((last_point_index, best_next_index));
             coordinates.push((p1, p2));
         }
     } else {
