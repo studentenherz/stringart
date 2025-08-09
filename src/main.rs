@@ -208,19 +208,8 @@ fn draw_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32)) {
 }
 
 fn subtract_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32), weight: u8) {
-    let canvas_size = image.width();
-    let mut mask = GrayImage::new(canvas_size, canvas_size);
-    draw_line_segment_mut(
-        &mut mask,
-        (p1.0 as f32, p1.1 as f32),
-        (p2.0 as f32, p2.1 as f32),
-        Luma([weight]),
-    );
-
-    for i in 0..image.width() {
-        for j in 0..image.height() {
-            let pixel = image.get_pixel_mut(i, j);
-            *pixel = Luma([pixel.0[0].saturating_sub(mask.get_pixel(i, j).0[0])]);
-        }
+    for (x, y) in PixelLine::new(p1.0, p1.1, p2.0, p2.1) {
+        let pixel = image.get_pixel_mut(x as u32, y as u32);
+        *pixel = Luma([pixel.0[0].saturating_sub(weight)]);
     }
 }
