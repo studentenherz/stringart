@@ -1,7 +1,6 @@
 use clap::{builder::styling::AnsiColor, builder::Styles, Parser};
 use image::imageops::invert;
 use image::{GrayImage, Luma};
-use imageproc::drawing::draw_line_segment_mut;
 use std::collections::HashSet;
 use std::f64::consts::PI;
 use std::fs::{self, OpenOptions};
@@ -203,12 +202,10 @@ fn calculate_line_intensity(image: &GrayImage, p1: (i32, i32), p2: (i32, i32)) -
 }
 
 fn draw_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32)) {
-    draw_line_segment_mut(
-        image,
-        (p1.0 as f32, p1.1 as f32),
-        (p2.0 as f32, p2.1 as f32),
-        Luma([0]),
-    );
+    for (x, y) in PixelLine::new(p1.0, p1.1, p2.0, p2.1) {
+        let pixel = image.get_pixel_mut(x as u32, y as u32);
+        *pixel = Luma([0]);
+    }
 }
 
 fn subtract_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32), weight: u8) {
