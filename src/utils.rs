@@ -1,3 +1,5 @@
+use image::{GrayImage, Luma};
+
 pub struct PixelLine {
     x0: i32,
     y0: i32,
@@ -63,5 +65,30 @@ impl Iterator for PixelLine {
         }
 
         Some(res)
+    }
+}
+
+pub fn calculate_line_intensity(image: &GrayImage, p1: (i32, i32), p2: (i32, i32)) -> u32 {
+    let mut total_intensity = 0u32;
+
+    for (x, y) in PixelLine::new(p1.0, p1.1, p2.0, p2.1) {
+        let pixel_value = image.get_pixel(x as u32, y as u32).0[0];
+        total_intensity += pixel_value as u32;
+    }
+
+    total_intensity
+}
+
+pub fn draw_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32)) {
+    for (x, y) in PixelLine::new(p1.0, p1.1, p2.0, p2.1) {
+        let pixel = image.get_pixel_mut(x as u32, y as u32);
+        *pixel = Luma([0]);
+    }
+}
+
+pub fn subtract_line(image: &mut GrayImage, p1: (i32, i32), p2: (i32, i32), weight: u8) {
+    for (x, y) in PixelLine::new(p1.0, p1.1, p2.0, p2.1) {
+        let pixel = image.get_pixel_mut(x as u32, y as u32);
+        *pixel = Luma([pixel.0[0].saturating_sub(weight)]);
     }
 }
