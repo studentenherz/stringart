@@ -2,13 +2,10 @@ use clap::{builder::styling::AnsiColor, builder::Styles, Parser};
 use image::imageops::invert;
 use image::{GrayImage, Luma};
 use imageproc::drawing::draw_line_segment_mut;
-use nalgebra::Vector2;
-use rayon::prelude::*;
 use std::collections::HashSet;
 use std::f64::consts::PI;
 use std::fs::{self, OpenOptions};
 use std::io::{self, BufRead, Write};
-use tqdm::tqdm;
 
 mod utils;
 
@@ -91,9 +88,9 @@ fn main() {
         let angles: Vec<f64> = (0..num_points)
             .map(|i| 2.0 * PI * i as f64 / num_points as f64)
             .collect();
-        let points: Vec<Vector2<f64>> = angles
+        let points: Vec<(f64, f64)> = angles
             .iter()
-            .map(|&angle| Vector2::new(angle.cos(), angle.sin()))
+            .map(|&angle| (angle.cos(), angle.sin()))
             .collect();
 
         assert!(img.width() == img.height(), "Image has to be sqaure");
@@ -103,8 +100,8 @@ fn main() {
             .iter()
             .map(|point| {
                 (
-                    ((point.x * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
-                    ((point.y * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
+                    ((point.0 * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
+                    ((point.1 * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
                 )
             })
             .collect();
@@ -113,9 +110,8 @@ fn main() {
 
         let mut last_point_index = 0; // Starting point
 
-        for _ in tqdm(0..num_lines) {
+        for _ in 0..num_lines {
             let best_next_index = (0..num_points)
-                .into_par_iter()
                 .filter_map(|i| {
                     if last_point_index < i && lines_drawn.contains(&(last_point_index, i))
                         || lines_drawn.contains(&(i, last_point_index))
