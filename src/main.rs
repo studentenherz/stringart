@@ -190,7 +190,7 @@ fn main() {
 fn calculate_line_intensity(image: &GrayImage, p1: (i32, i32), p2: (i32, i32)) -> u32 {
     let mut total_intensity = 0u32;
 
-    for (x, y) in PixelLine::new(p1.0, p1.1, p2.0, p1.1) {
+    for (x, y) in PixelLine::new(p1.0, p1.1, p2.0, p2.1) {
         let pixel_value = image.get_pixel(x as u32, y as u32).0[0];
         total_intensity += pixel_value as u32;
     }
