@@ -96,7 +96,9 @@ fn main() {
             .map(|&angle| Vector2::new(angle.cos(), angle.sin()))
             .collect();
 
-        canvas_size = img.width().min(img.height()) as i32;
+        assert!(img.width() == img.height(), "Image has to be sqaure");
+
+        canvas_size = img.width() as i32;
         let points: Vec<(i32, i32)> = points
             .iter()
             .map(|point| {
@@ -115,7 +117,9 @@ fn main() {
             let best_next_index = (0..num_points)
                 .into_par_iter()
                 .filter_map(|i| {
-                    if lines_drawn.contains(&(i, last_point_index)) {
+                    if last_point_index < i && lines_drawn.contains(&(last_point_index, i))
+                        || lines_drawn.contains(&(i, last_point_index))
+                    {
                         return None;
                     }
 
@@ -142,7 +146,11 @@ fn main() {
 
             subtract_line(&mut img, p1, p2, weight);
 
-            lines_drawn.insert((last_point_index, best_next_index));
+            if last_point_index < best_next_index {
+                lines_drawn.insert((last_point_index, best_next_index));
+            } else {
+                lines_drawn.insert((best_next_index, last_point_index));
+            }
             coordinates.push((p1, p2));
         }
     } else {
