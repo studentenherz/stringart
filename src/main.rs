@@ -1,10 +1,7 @@
 use clap::{builder::styling::AnsiColor, builder::Styles, Parser};
-use image::imageops::invert;
 use image::{GrayImage, Luma};
-use std::collections::HashSet;
-use std::f64::consts::PI;
-use std::fs::{self, OpenOptions};
-use std::io::{self, BufRead, Write};
+use std::fs;
+use std::io::{self, BufRead};
 
 mod utils;
 
@@ -62,93 +59,23 @@ fn main() {
     let output_path = cli.output;
     let coordinates_path = cli.coordinates;
     let num_points = cli.points;
-    let num_lines = cli.lines;
     let scale = cli.scale;
+    let num_lines = cli.lines;
     let weight = cli.weight;
 
-    let mut coordinates: Vec<((i32, i32), (i32, i32))> = vec![];
     let mut canvas_size = 0;
 
-    if let Some(input_path) = input_path {
-        let mut file = coordinates_path.map(|coordinates_path| {
-            OpenOptions::new()
-                .write(true)
-                .truncate(true)
-                .create(true)
-                .open(coordinates_path)
-                .expect("Failed to open coordinates file")
-        });
+    let coordinates = if let Some(input_path) = input_path {
+        let image_data = fs::read(&input_path).expect("Error reading the input file!");
 
-        let mut img = image::open(input_path)
-            .expect("Failed to open image")
-            .to_luma8();
-        invert(&mut img);
-
-        let angles: Vec<f64> = (0..num_points)
-            .map(|i| 2.0 * PI * i as f64 / num_points as f64)
-            .collect();
-        let points: Vec<(f64, f64)> = angles
-            .iter()
-            .map(|&angle| (angle.cos(), angle.sin()))
-            .collect();
-
-        assert!(img.width() == img.height(), "Image has to be sqaure");
-
-        canvas_size = img.width() as i32;
-        let points: Vec<(i32, i32)> = points
-            .iter()
-            .map(|point| {
-                (
-                    ((point.0 * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
-                    ((point.1 * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
-                )
-            })
-            .collect();
-
-        let mut lines_drawn = HashSet::new();
-
-        let mut last_point_index = 0; // Starting point
-
-        for _ in 0..num_lines {
-            let best_next_index = (0..num_points)
-                .filter_map(|i| {
-                    if last_point_index < i && lines_drawn.contains(&(last_point_index, i))
-                        || lines_drawn.contains(&(i, last_point_index))
-                    {
-                        return None;
-                    }
-
-                    let p1 = points[i];
-                    let p2 = points[last_point_index];
-
-                    Some((calculate_line_intensity(&img, p1, p2), i))
-                })
-                .max_by_key(|(intensity, _i)| *intensity)
-                .expect(&format!(
-                    "Can't find a line form point {} that isn't already taken",
-                    last_point_index
-                ))
-                .1;
-
-            let p1 = points[last_point_index];
-            let p2 = points[best_next_index];
-            last_point_index = best_next_index;
-
-            if let Some(ref mut file) = file {
-                writeln!(file, "{} {} {} {}", p1.0, p1.1, p2.0, p2.1)
-                    .expect("Error writing to file");
-            }
-
-            subtract_line(&mut img, p1, p2, weight);
-
-            if last_point_index < best_next_index {
-                lines_drawn.insert((last_point_index, best_next_index));
-            } else {
-                lines_drawn.insert((best_next_index, last_point_index));
-            }
-            coordinates.push((p1, p2));
+        let coordinates = generate_stringart(&image_data, num_points, num_lines, weight);
+        if let Some(file_path) = coordinates_path {
+            export_coordinates(&coordinates, &file_path);
         }
+
+        coordinates
     } else {
+        let mut coordinates: Vec<((i32, i32), (i32, i32))> = vec![];
         let coordinates_path =
             coordinates_path.expect("If no image is given, this expects a coordinates file");
 
@@ -163,15 +90,21 @@ fn main() {
                 let d: i32 = parts[3].parse().expect("Failed to parse number");
 
                 coordinates.push(((a, b), (c, d)));
-                canvas_size = i32::max(canvas_size, a);
-                canvas_size = i32::max(canvas_size, b);
-                canvas_size = i32::max(canvas_size, c);
-                canvas_size = i32::max(canvas_size, d);
             } else {
                 eprintln!("Unexpected number of elements in line: {}", line);
             }
         }
+
+        coordinates
+    };
+
+    for ((a, b), (c, d)) in coordinates.iter() {
+        canvas_size = i32::max(canvas_size, *a);
+        canvas_size = i32::max(canvas_size, *b);
+        canvas_size = i32::max(canvas_size, *c);
+        canvas_size = i32::max(canvas_size, *d);
     }
+    canvas_size += 1;
 
     let mut canvas = GrayImage::new(
         (scale * canvas_size as f64) as u32,
