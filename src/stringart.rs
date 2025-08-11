@@ -13,7 +13,7 @@ pub fn generate_stringart(
     num_lines: usize,
     weight: u8,
 ) -> Vec<((i32, i32), (i32, i32))> {
-    let mut coordinates: Vec<((i32, i32), (i32, i32))> = vec![];
+    let mut coordinates = Vec::<((i32, i32), (i32, i32))>::new();
 
     let mut img = ImageReader::new(Cursor::new(image_data))
         .with_guessed_format()
@@ -64,10 +64,19 @@ pub fn generate_stringart(
                 Some((calculate_line_intensity(&img, p1, p2), i))
             })
             .max_by_key(|(intensity, _i)| *intensity)
-            .expect(&format!(
-                "Can't find a line from point {} that isn't already taken",
-                last_point_index
-            ))
+            .unwrap_or_else(|| {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    panic!(
+                        "Can't find a line from point {} that isn't already taken",
+                        last_point_index
+                    );
+                }
+                #[cfg(target_arch = "wasm32")]
+                {
+                    core::arch::wasm32::unreachable();
+                }
+            })
             .1;
 
         let p1 = points[last_point_index];
