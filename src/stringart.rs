@@ -65,7 +65,7 @@ pub fn generate_stringart(
             })
             .max_by_key(|(intensity, _i)| *intensity)
             .expect(&format!(
-                "Can't find a line form point {} that isn't already taken",
+                "Can't find a line from point {} that isn't already taken",
                 last_point_index
             ))
             .1;
