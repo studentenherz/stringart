@@ -3,6 +3,9 @@ pub mod utils;
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {
+    #[global_allocator]
+    static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
     extern crate console_error_panic_hook;
     use crate::stringart;
     use wasm_bindgen::prelude::*;
