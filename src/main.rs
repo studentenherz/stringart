@@ -3,8 +3,10 @@ use image::{GrayImage, Luma};
 use std::fs;
 use std::io::{self, BufRead};
 
-mod utils;
+mod stringart;
+pub mod utils;
 
+use stringart::*;
 use utils::*;
 
 fn cli_styles() -> Styles {
