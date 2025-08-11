@@ -8,3 +8,12 @@ clap = { version = "4.5.10", features = ["derive"] }
 image = "0.25.2"
 rayon = "1.10.0"
 
+[target.wasm32-unknown-unknown.dependencies]
+console_error_panic_hook = "0.1.7"
+serde-wasm-bindgen = "0.6.5"
+wasm-bindgen = "0.2.100"
+
+[lib]
+name = "libstringart"
+crate-type = ["cdylib"]
+
