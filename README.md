@@ -40,13 +40,13 @@ Options:
 To build this use
 
 ```sh
-cargo build --release --bins
+cargo build --bins --profile cli-release
 ```
 
 or install it in your system with. 
 
 ```sh 
-cargo install --path . --bins
+cargo install --path . --bins --profile cli-release
 ```
 
 ### WASM 
