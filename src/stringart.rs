@@ -32,15 +32,13 @@ pub fn generate_stringart(
         .map(|&angle| (angle.cos(), angle.sin()))
         .collect();
 
-    assert!(img.width() == img.height(), "Image has to be sqaure");
-
-    let canvas_size = img.width() as i32;
+    let canvas_size = img.width().min(img.height()) as i32;
     let points: Vec<(i32, i32)> = points
         .iter()
         .map(|point| {
             (
-                ((point.0 * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
-                ((point.1 * (canvas_size - 1) as f64) as i32 + canvas_size) / 2,
+                ((point.0 * (canvas_size - 1) as f64) as i32 + img.width() as i32) / 2,
+                ((point.1 * (canvas_size - 1) as f64) as i32 + img.height() as i32) / 2,
             )
         })
         .collect();
