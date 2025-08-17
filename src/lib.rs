@@ -16,11 +16,12 @@ mod wasm {
         num_points: usize,
         num_lines: usize,
         weight: u8,
+        invert: bool,
     ) -> Result<JsValue, serde_wasm_bindgen::Error> {
         console_error_panic_hook::set_once();
 
         serde_wasm_bindgen::to_value(&stringart::generate_stringart(
-            image_data, num_points, num_lines, weight,
+            image_data, num_points, num_lines, weight, invert,
         ))
     }
 }

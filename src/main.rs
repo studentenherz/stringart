@@ -52,6 +52,10 @@ struct Cli {
     /// Weight of each line
     #[arg(short, long, default_value = "20")]
     weight: u8,
+
+    /// Don't invert the image colors
+    #[arg(short, long)]
+    no_invert: bool,
 }
 
 fn main() {
@@ -64,13 +68,14 @@ fn main() {
     let scale = cli.scale;
     let num_lines = cli.lines;
     let weight = cli.weight;
+    let invert = !cli.no_invert;
 
     let mut canvas_size = 0;
 
     let coordinates = if let Some(input_path) = input_path {
         let image_data = fs::read(&input_path).expect("Error reading the input file!");
 
-        let coordinates = generate_stringart(&image_data, num_points, num_lines, weight);
+        let coordinates = generate_stringart(&image_data, num_points, num_lines, weight, invert);
         if let Some(file_path) = coordinates_path {
             export_coordinates(&coordinates, &file_path);
         }

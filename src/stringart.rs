@@ -1,4 +1,3 @@
-use image::imageops::invert;
 use image::ImageReader;
 use std::collections::HashSet;
 use std::f64::consts::PI;
@@ -12,6 +11,7 @@ pub fn generate_stringart(
     num_points: usize,
     num_lines: usize,
     weight: u8,
+    invert: bool,
 ) -> Vec<((i32, i32), (i32, i32))> {
     let mut coordinates = Vec::<((i32, i32), (i32, i32))>::new();
 
@@ -22,7 +22,9 @@ pub fn generate_stringart(
         .unwrap()
         .to_luma8();
 
-    invert(&mut img);
+    if invert {
+        image::imageops::invert(&mut img);
+    }
 
     let angles: Vec<f64> = (0..num_points)
         .map(|i| 2.0 * PI * i as f64 / num_points as f64)
